@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Work Record System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section id="entry-screen" class="panel auth-panel">
+      <div>
+        <p class="eyebrow">Farmer Work Record System</p>
+        <h1>Tractor Work Register</h1>
+      </div>
+      <div class="auth-choice-grid">
+        <button type="button" onclick="showSetupScreen()">Create Admin Account</button>
+        <button type="button" class="secondary" onclick="showLoginScreen('admin')">Login Admin</button>
+        <button type="button" class="secondary" onclick="showLoginScreen('driver')">Login Driver</button>
+      </div>
+      <p class="hint">Create the admin account only once. Admin can add driver accounts from the dashboard.</p>
+    </section>
+
+    <section id="login-screen" class="panel auth-panel hidden">
+      <div>
+        <p class="eyebrow" id="loginRoleLabel">Login</p>
+        <h1 id="loginTitle">Login</h1>
+      </div>
+      <form id="loginForm" class="form-grid">
+        <input type="hidden" id="loginRole">
+        <label>
+          Username or Email
+          <input type="text" id="loginUsername" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Login</button>
+      </form>
+      <button class="secondary" type="button" onclick="showEntryScreen()">Back</button>
+    </section>
+
+    <section id="setup-screen" class="panel auth-panel hidden">
+      <div>
+        <p class="eyebrow">First Time Setup</p>
+        <h1>Create Admin Account</h1>
+      </div>
+      <form id="setupForm" class="form-grid">
+        <label>
+          Full Name
+          <input type="text" id="setupName" autocomplete="name" required>
+        </label>
+        <label>
+          Email
+          <input type="email" id="setupEmail" autocomplete="email" required>
+        </label>
+        <label>
+          Mobile Number
+          <input type="tel" id="setupMobile" autocomplete="tel" required>
+        </label>
+        <label>
+          Create Password
+          <input type="password" id="setupPassword" autocomplete="new-password" required minlength="6">
+        </label>
+        <label>
+          Confirm Password
+          <input type="password" id="setupConfirmPassword" autocomplete="new-password" required minlength="6">
+        </label>
+        <button type="submit">Create Admin</button>
+      </form>
+      <button class="secondary" type="button" onclick="showEntryScreen()">Back</button>
+      <p class="hint">If an admin already exists, this setup will be blocked for security.</p>
+    </section>
+
+    <section id="home-screen" class="panel wide-panel hidden">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow" id="roleLabel">Driver</p>
+          <h1>Work Entry</h1>
+        </div>
+        <div class="actions">
+          <button id="dashboardButton" class="secondary hidden" type="button" onclick="navigateToDashboard()">Dashboard</button>
+          <button class="secondary" type="button" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="split-layout">
+        <section class="section-block">
+          <h2>Search Farmer</h2>
+          <div class="search-row">
+            <input type="search" id="farmerSearch" placeholder="Search by name or mobile">
+            <button type="button" onclick="searchFarmers()">Search</button>
+          </div>
+          <div id="farmerResults" class="result-list"></div>
+        </section>
+
+        <section class="section-block">
+          <h2>Add New Farmer</h2>
+          <form id="newFarmerForm" class="form-grid compact">
+            <input type="text" id="newFarmerName" placeholder="Farmer name" required>
+            <input type="tel" id="newFarmerMobile" placeholder="Mobile number" required>
+            <input type="text" id="newFarmerVillage" placeholder="Village / address" required>
+            <input type="text" id="newFarmerNotes" placeholder="Optional notes">
+            <button type="submit">Add Farmer</button>
+          </form>
+        </section>
+      </div>
+
+      <section id="workEntry" class="section-block hidden">
+        <div class="selected-farmer">
+          <div>
+            <p class="eyebrow">Selected Farmer</p>
+            <h2 id="selectedFarmerName"></h2>
+            <p id="selectedFarmerMeta"></p>
+          </div>
+          <button type="button" class="secondary" onclick="clearSelectedFarmer()">Change</button>
+        </div>
+
+        <div class="form-grid two-column">
+          <label>
+            Equipment
+            <select id="equipmentSelect"></select>
+          </label>
+          <label>
+            Driver Name
+            <input type="text" id="driverName" readonly>
+          </label>
+        </div>
+
+        <div class="timer-card">
+          <div>
+            <span>Start Time</span>
+            <strong id="startTimeDisplay">Not started</strong>
+          </div>
+          <div>
+            <span>End Time</span>
+            <strong id="endTimeDisplay">Not ended</strong>
+          </div>
+          <div>
+            <span>Total Hours</span>
+            <strong id="workDurationDisplay">0.00</strong>
+          </div>
+          <div>
+            <span>Total Amount</span>
+            <strong id="totalRsDisplay">Rs 0.00</strong>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="startWorkButton" onclick="startWork()">Start Work</button>
+          <button type="button" id="endWorkButton" class="secondary" onclick="endWork()" disabled>End Work</button>
+        </div>
+
+        <form id="paymentForm" class="payment-box hidden">
+          <label>
+            Paid Amount
+            <input type="number" id="paidAmount" min="0" step="0.01" required>
+          </label>
+          <div class="balance-preview">
+            <span>Remaining Balance</span>
+            <strong id="remainingBalanceDisplay">Rs 0.00</strong>
+          </div>
+          <button type="submit">Submit Work Record</button>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

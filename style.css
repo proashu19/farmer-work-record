@@ -1,0 +1,406 @@
+:root {
+    --green: #198754;
+    --green-dark: #11623c;
+    --ink: #1d2a22;
+    --muted: #647067;
+    --line: #d8e2da;
+    --paper: rgba(255, 255, 255, 0.94);
+    --soft: #f5f8f2;
+    --danger: #b3261e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: var(--ink);
+    background:
+        linear-gradient(rgba(243, 248, 239, 0.82), rgba(232, 241, 226, 0.88)),
+        url("tractor-makes-harvesting-hay-animals-farm_627378-1301.avif") center / cover fixed;
+}
+
+.app-shell {
+    width: min(1180px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 28px 0;
+}
+
+.dashboard-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 14px 38px rgba(30, 56, 37, 0.14);
+}
+
+.collapsible-panel {
+    padding: 0;
+    overflow: hidden;
+}
+
+.collapsible-panel summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 58px;
+    padding: 0 18px;
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+
+.collapsible-panel summary::-webkit-details-marker {
+    display: none;
+}
+
+.collapsible-panel summary::after {
+    content: "+";
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--green-dark);
+    background: #fff;
+}
+
+.collapsible-panel[open] summary {
+    border-bottom: 1px solid var(--line);
+}
+
+.collapsible-panel[open] summary::after {
+    content: "-";
+}
+
+.collapsible-panel > form,
+.collapsible-panel > .stack-list {
+    margin: 16px 18px;
+}
+
+.auth-panel {
+    max-width: 440px;
+    margin: 8vh auto 0;
+}
+
+.wide-panel {
+    width: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+h1,
+h2 {
+    margin: 0;
+    letter-spacing: 0;
+}
+
+h1 {
+    font-size: 32px;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+.eyebrow {
+    margin: 0 0 6px;
+    color: var(--green-dark);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.hint,
+.empty-state,
+small {
+    color: var(--muted);
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.actions,
+.row-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.auth-choice-grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.split-layout,
+.grid-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.section-block {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.form-grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.compact {
+    gap: 10px;
+}
+
+.two-column {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+input,
+select,
+button {
+    width: 100%;
+    min-height: 42px;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+input,
+select {
+    border: 1px solid var(--line);
+    padding: 9px 11px;
+    background: #fff;
+    color: var(--ink);
+}
+
+button {
+    border: 1px solid var(--green-dark);
+    padding: 9px 13px;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--green-dark);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.secondary {
+    background: #fff;
+    color: var(--green-dark);
+}
+
+.secondary:hover {
+    background: var(--soft);
+}
+
+.danger {
+    border-color: var(--danger);
+    background: var(--danger);
+}
+
+.danger:hover {
+    background: #8f1d17;
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.result-list,
+.stack-list {
+    display: grid;
+    gap: 10px;
+}
+
+.result-item,
+.stack-item {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    background: #fff;
+    color: var(--ink);
+    text-align: left;
+}
+
+.result-item:hover {
+    border-color: var(--green);
+    background: var(--soft);
+}
+
+.stack-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.stack-item span,
+.result-item span,
+.result-item small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.selected-farmer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.selected-farmer p {
+    margin: 4px 0 0;
+    color: var(--muted);
+}
+
+.timer-card,
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.timer-card div,
+.stats-grid article,
+.payment-box,
+.balance-preview {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+}
+
+.timer-card span,
+.stats-grid span,
+.balance-preview span {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.timer-card strong,
+.stats-grid strong,
+.balance-preview strong {
+    font-size: 20px;
+}
+
+.payment-box {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px 190px;
+    gap: 12px;
+    align-items: end;
+    margin-top: 16px;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th,
+td {
+    border: 1px solid var(--line);
+    padding: 10px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background: var(--green);
+    color: #fff;
+}
+
+td input {
+    min-width: 120px;
+}
+
+td .row-actions,
+.row-actions {
+    min-width: 180px;
+}
+
+@media (max-width: 760px) {
+    .app-shell {
+        width: min(100% - 16px, 1180px);
+        padding: 12px 0;
+    }
+
+    .panel {
+        padding: 14px;
+    }
+
+    .topbar,
+    .selected-farmer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .split-layout,
+    .grid-sections,
+    .two-column,
+    .timer-card,
+    .stats-grid,
+    .payment-box {
+        grid-template-columns: 1fr;
+    }
+
+    .search-row {
+        grid-template-columns: 1fr;
+    }
+
+    h1 {
+        font-size: 26px;
+    }
+}
