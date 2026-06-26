@@ -3,6 +3,7 @@ const session = JSON.parse(localStorage.getItem("farmerAppSession") || "null");
 let equipmentCache = [];
 let farmerCache = [];
 let recordCache = [];
+const expandedRecordGroups = new Set();
 
 const money = (value) => `Rs ${Number(value || 0).toFixed(2)}`;
 const formatDate = (value) => new Date(value).toLocaleDateString();
@@ -159,29 +160,105 @@ async function showHistory(id) {
 async function loadRecords() {
     recordCache = await apiFetch("/work-records");
     const table = document.getElementById("recordsTable");
-    table.innerHTML = recordCache
-        .map(
-            (record) => `
-                <tr>
-                    <td>${escapeHtml(record.farmerName)}</td>
-                    <td>${escapeHtml(record.mobile)}</td>
-                    <td>${escapeHtml(record.village)}</td>
-                    <td>${escapeHtml(record.equipment)}</td>
-                    <td>${formatDate(record.workDate)}<br><small>${formatTime(record.startTime)} - ${formatTime(record.endTime)}</small></td>
-                    <td>${record.totalHours.toFixed(2)}</td>
-                    <td>${money(record.equipmentRate)}</td>
-                    <td><input type="number" value="${record.totalAmount}" id="total-${record._id}" min="0" step="0.01"></td>
-                    <td><input type="number" value="${record.paidAmount}" id="paid-${record._id}" min="0" step="0.01"></td>
-                    <td>${money(record.remainingBalance)}</td>
-                    <td>${escapeHtml(record.driverName)}</td>
+    table.innerHTML = groupWorkRecords(recordCache)
+        .map((group) => {
+            const expanded = expandedRecordGroups.has(group.key);
+            const groupRow = `
+                <tr class="merged-record-row">
+                    <td><strong>${escapeHtml(group.farmerName)}</strong><br><small>${group.records.length} work records</small></td>
+                    <td>${escapeHtml(group.mobile)}</td>
+                    <td>${escapeHtml(group.village)}</td>
+                    <td>${escapeHtml(group.equipment.join(", "))}</td>
+                    <td>${formatDate(group.latestDate)}<br><small>Latest work</small></td>
+                    <td>${group.totalHours.toFixed(2)}</td>
+                    <td>Mixed</td>
+                    <td>${money(group.totalAmount)}</td>
+                    <td>${money(group.paidAmount)}</td>
+                    <td>${money(group.remainingBalance)}</td>
+                    <td>${escapeHtml(group.drivers.join(", "))}</td>
                     <td class="row-actions">
-                        <button type="button" onclick="correctRecord('${record._id}')">Correct</button>
-                        <button type="button" class="danger" onclick="deleteRecord('${record._id}')">Delete</button>
+                        <button type="button" onclick="toggleGroupRecords('${group.key}')">${expanded ? "Hide" : "Details"}</button>
                     </td>
                 </tr>
-            `
-        )
+            `;
+
+            return expanded ? `${groupRow}${group.records.map(recordDetailRow).join("")}` : groupRow;
+        })
         .join("");
+}
+
+function groupWorkRecords(records) {
+    const groupMap = new Map();
+
+    records.forEach((record) => {
+        const key = `${record.farmerName || ""}|${record.mobile || ""}`.toLowerCase();
+        if (!groupMap.has(key)) {
+            groupMap.set(key, {
+                key,
+                farmerName: record.farmerName,
+                mobile: record.mobile,
+                village: record.village,
+                equipment: new Set(),
+                drivers: new Set(),
+                latestDate: record.workDate,
+                totalHours: 0,
+                totalAmount: 0,
+                paidAmount: 0,
+                remainingBalance: 0,
+                records: []
+            });
+        }
+
+        const group = groupMap.get(key);
+        group.equipment.add(record.equipment);
+        group.drivers.add(record.driverName);
+        group.latestDate = new Date(record.workDate) > new Date(group.latestDate) ? record.workDate : group.latestDate;
+        group.totalHours += Number(record.totalHours) || 0;
+        group.totalAmount += Number(record.totalAmount) || 0;
+        group.paidAmount += Number(record.paidAmount) || 0;
+        group.remainingBalance += Number(record.remainingBalance) || 0;
+        group.records.push(record);
+    });
+
+    return [...groupMap.values()]
+        .map((group) => ({
+            ...group,
+            equipment: [...group.equipment],
+            drivers: [...group.drivers],
+            records: group.records.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+        }))
+        .sort((a, b) => new Date(b.latestDate) - new Date(a.latestDate));
+}
+
+function recordDetailRow(record) {
+    return `
+        <tr class="record-detail-row">
+            <td><small>Single work record</small></td>
+            <td>${escapeHtml(record.mobile)}</td>
+            <td>${escapeHtml(record.village)}</td>
+            <td>${escapeHtml(record.equipment)}</td>
+            <td>${formatDate(record.workDate)}<br><small>${formatTime(record.startTime)} - ${formatTime(record.endTime)}</small></td>
+            <td>${record.totalHours.toFixed(2)}</td>
+            <td>${money(record.equipmentRate)}</td>
+            <td><input type="number" value="${record.totalAmount}" id="total-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.paidAmount}" id="paid-${record._id}" min="0" step="0.01"></td>
+            <td>${money(record.remainingBalance)}</td>
+            <td>${escapeHtml(record.driverName)}</td>
+            <td class="row-actions">
+                <button type="button" onclick="correctRecord('${record._id}')">Correct</button>
+                <button type="button" class="danger" onclick="deleteRecord('${record._id}')">Delete</button>
+            </td>
+        </tr>
+    `;
+}
+
+function toggleGroupRecords(key) {
+    if (expandedRecordGroups.has(key)) {
+        expandedRecordGroups.delete(key);
+    } else {
+        expandedRecordGroups.add(key);
+    }
+    loadRecords();
 }
 
 async function correctRecord(id) {

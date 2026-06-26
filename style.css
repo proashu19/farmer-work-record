@@ -366,6 +366,19 @@ td input {
     min-width: 120px;
 }
 
+.merged-record-row td {
+    background: #f8fbf6;
+    font-weight: 600;
+}
+
+.record-detail-row td {
+    background: #fff;
+}
+
+.record-detail-row td:first-child {
+    padding-left: 24px;
+}
+
 td .row-actions,
 .row-actions {
     min-width: 180px;
