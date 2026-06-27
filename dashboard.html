@@ -65,8 +65,8 @@
 
     <section class="panel wide-panel">
       <div class="topbar">
-        <h2>Farmers</h2>
-        <input type="search" id="adminFarmerSearch" placeholder="Search farmers">
+        <h2>Pending Farmer Work</h2>
+        <input type="search" id="adminFarmerSearch" placeholder="Search pending farmer work">
       </div>
       <div class="table-wrap">
         <table>
@@ -75,13 +75,14 @@
               <th>Name</th>
               <th>Mobile</th>
               <th>Village</th>
-              <th>Balance</th>
+              <th>Pending Balance</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="farmersTable"></tbody>
         </table>
       </div>
+      <div id="farmerHistoryPanel" class="history-panel hidden"></div>
     </section>
 
     <section class="panel wide-panel">

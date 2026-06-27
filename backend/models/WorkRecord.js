@@ -15,7 +15,9 @@ const workRecordSchema = new mongoose.Schema(
         totalAmount: { type: Number, required: true, min: 0 },
         paidAmount: { type: Number, required: true, min: 0 },
         remainingBalance: { type: Number, required: true, min: 0 },
-        driverName: { type: String, required: true }
+        driverName: { type: String, required: true },
+        adminSaved: { type: Boolean, default: false },
+        adminSavedAt: Date
     },
     { timestamps: true }
 );

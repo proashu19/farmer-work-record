@@ -81,7 +81,9 @@ router.post("/", requireRole(["admin", "driver"]), async (req, res) => {
             totalAmount,
             paidAmount: roundMoney(paidAmount),
             remainingBalance,
-            driverName: req.body.driverName || req.user.name
+            driverName: req.body.driverName || req.user.name,
+            adminSaved: req.user.role === "admin",
+            adminSavedAt: req.user.role === "admin" ? new Date() : undefined
         });
 
         farmer.balance = roundMoney(farmer.balance + remainingBalance);
@@ -100,15 +102,35 @@ router.put("/:id", requireRole("admin"), async (req, res) => {
 
         const oldRemaining = record.remainingBalance;
         const paidAmount = Math.max(0, Number(req.body.paidAmount) || 0);
-        const totalAmount = roundMoney(Number(req.body.totalAmount) || record.totalAmount);
+        const totalHours = req.body.totalHours === undefined ? record.totalHours : roundMoney(req.body.totalHours);
+        const equipmentRate = req.body.equipmentRate === undefined ? record.equipmentRate : roundMoney(req.body.equipmentRate);
+        const calculatedTotal = roundMoney(totalHours * equipmentRate);
+        const totalAmount = req.body.totalAmount === undefined ? calculatedTotal : roundMoney(req.body.totalAmount);
         const remainingBalance = roundMoney(Math.max(totalAmount - paidAmount, 0));
 
+        record.farmerName = req.body.farmerName || record.farmerName;
+        record.mobile = req.body.mobile || record.mobile;
+        record.village = req.body.village || record.village;
+        record.equipment = req.body.equipment || record.equipment;
+        record.totalHours = totalHours;
+        record.equipmentRate = equipmentRate;
         record.paidAmount = roundMoney(paidAmount);
         record.totalAmount = totalAmount;
         record.remainingBalance = remainingBalance;
+        record.adminSaved = true;
+        record.adminSavedAt = new Date();
         await record.save();
 
         await Farmer.findByIdAndUpdate(record.farmer, { $inc: { balance: remainingBalance - oldRemaining } });
+        try {
+            await Farmer.findByIdAndUpdate(record.farmer, {
+                name: record.farmerName,
+                mobile: record.mobile,
+                village: record.village
+            });
+        } catch (err) {
+            // Keep the corrected work record even if the master farmer mobile conflicts.
+        }
         res.json(record);
     } catch (err) {
         res.status(400).json({ error: err.message });

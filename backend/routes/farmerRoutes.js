@@ -26,6 +26,43 @@ router.get("/", requireRole(["admin", "driver"]), async (req, res) => {
     }
 });
 
+router.get("/review-queue", requireRole("admin"), async (req, res) => {
+    try {
+        const query = (req.query.search || "").trim().toLowerCase();
+        const records = await WorkRecord.find({ adminSaved: { $ne: true } }).sort({ startTime: -1 });
+        const groups = new Map();
+
+        records.forEach((record) => {
+            const key = `${record.farmerName || ""}|${record.mobile || ""}`.toLowerCase();
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    _id: record.farmer.toString(),
+                    name: record.farmerName,
+                    mobile: record.mobile,
+                    village: record.village,
+                    balance: 0,
+                    pendingCount: 0,
+                    latestWorkDate: record.workDate
+                });
+            }
+
+            const group = groups.get(key);
+            group.balance += Number(record.remainingBalance) || 0;
+            group.pendingCount += 1;
+            group.latestWorkDate = new Date(record.workDate) > new Date(group.latestWorkDate) ? record.workDate : group.latestWorkDate;
+        });
+
+        const result = [...groups.values()].filter((group) => {
+            if (!query) return true;
+            return [group.name, group.mobile, group.village].some((value) => String(value || "").toLowerCase().includes(query));
+        });
+
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post("/", requireRole(["admin", "driver"]), async (req, res) => {
     try {
         const farmer = await Farmer.create({
@@ -78,7 +115,21 @@ router.delete("/:id", requireRole("admin"), async (req, res) => {
 
 router.get("/:id/history", requireRole("admin"), async (req, res) => {
     try {
-        const records = await WorkRecord.find({ farmer: req.params.id }).sort({ startTime: -1 });
+        const farmer = await Farmer.findById(req.params.id);
+        if (!farmer) return res.status(404).json({ error: "Farmer not found." });
+
+        const filter = {
+            $or: [
+                { farmer: req.params.id },
+                { farmerName: farmer.name, mobile: farmer.mobile }
+            ]
+        };
+
+        if (req.query.pending === "1") {
+            filter.adminSaved = { $ne: true };
+        }
+
+        const records = await WorkRecord.find(filter).sort({ startTime: -1 });
         res.json(records);
     } catch (err) {
         res.status(500).json({ error: err.message });

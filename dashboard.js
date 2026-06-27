@@ -109,8 +109,18 @@ async function deleteEquipment(id) {
 
 async function loadFarmers() {
     const query = document.getElementById("adminFarmerSearch").value.trim();
-    farmerCache = await apiFetch(`/farmers?search=${encodeURIComponent(query)}`);
+    farmerCache = await apiFetch(`/farmers/review-queue?search=${encodeURIComponent(query)}`);
     const table = document.getElementById("farmersTable");
+
+    if (farmerCache.length === 0) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty-state">No pending driver work. Saved records are available in Work Records.</td>
+            </tr>
+        `;
+        return;
+    }
+
     table.innerHTML = farmerCache
         .map(
             (farmer) => `
@@ -118,7 +128,7 @@ async function loadFarmers() {
                     <td><input value="${escapeHtml(farmer.name)}" data-field="name" data-id="${farmer._id}"></td>
                     <td><input value="${escapeHtml(farmer.mobile)}" data-field="mobile" data-id="${farmer._id}"></td>
                     <td><input value="${escapeHtml(farmer.village)}" data-field="village" data-id="${farmer._id}"></td>
-                    <td>${money(farmer.balance)}</td>
+                    <td>${money(farmer.balance)}<br><small>${farmer.pendingCount} pending records</small></td>
                     <td class="row-actions">
                         <button type="button" onclick="saveFarmer('${farmer._id}')">Save</button>
                         <button type="button" class="secondary" onclick="showHistory('${farmer._id}')">History</button>
@@ -137,7 +147,27 @@ async function saveFarmer(id) {
         return data;
     }, {});
     await apiFetch(`/farmers/${id}`, { method: "PUT", body: JSON.stringify(payload) });
-    await loadFarmers();
+    const records = await apiFetch(`/farmers/${id}/history?pending=1`);
+    await Promise.all(
+        records.map((record) =>
+            apiFetch(`/work-records/${record._id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    farmerName: payload.name,
+                    mobile: payload.mobile,
+                    village: payload.village,
+                    equipment: record.equipment,
+                    totalHours: record.totalHours,
+                    equipmentRate: record.equipmentRate,
+                    totalAmount: record.totalAmount,
+                    paidAmount: record.paidAmount
+                })
+            })
+        )
+    );
+    alert("Farmer work saved to Work Records.");
+    await loadAll();
+    closeHistoryPanel();
 }
 
 async function deleteFarmer(id) {
@@ -152,9 +182,110 @@ async function deleteFarmer(id) {
 }
 
 async function showHistory(id) {
-    const records = await apiFetch(`/farmers/${id}/history`);
-    const lines = records.map((record) => `${formatDate(record.workDate)} | ${record.equipment} | ${money(record.totalAmount)} | paid ${money(record.paidAmount)} | due ${money(record.remainingBalance)}`);
-    alert(lines.length ? lines.join("\n") : "No work history for this farmer.");
+    const records = await apiFetch(`/farmers/${id}/history?pending=1`);
+    const farmer = farmerCache.find((item) => item._id === id);
+    const panel = document.getElementById("farmerHistoryPanel");
+
+    panel.classList.remove("hidden");
+    panel.innerHTML = `
+        <div class="topbar">
+            <div>
+                <p class="eyebrow">Pending Individual Work Table</p>
+                <h2>${escapeHtml(farmer?.name || "Farmer History")}</h2>
+                <p class="hint">${escapeHtml(farmer?.mobile || "")} ${farmer?.village ? "- " + escapeHtml(farmer.village) : ""}</p>
+            </div>
+            <button type="button" class="secondary" onclick="closeHistoryPanel()">Close</button>
+        </div>
+        ${records.length ? farmerHistoryTable(records) : '<p class="empty-state">No pending work for this farmer. Saved data is in Work Records.</p>'}
+    `;
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeHistoryPanel() {
+    const panel = document.getElementById("farmerHistoryPanel");
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+}
+
+function farmerHistoryTable(records) {
+    const groups = groupWorkRecords(records);
+
+    return groups
+        .map(
+            (group) => `
+                <div class="history-group">
+                    <div class="history-group-header">
+                        <strong>${escapeHtml(group.farmerName)} - ${escapeHtml(group.mobile)}</strong>
+                        <span>${group.records.length} records | Total ${money(group.totalAmount)} | Paid ${money(group.paidAmount)} | Due ${money(group.remainingBalance)}</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="individual-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Equipment</th>
+                                    <th>Date</th>
+                                    <th>Work Session Hours</th>
+                                    <th>Rate</th>
+                                    <th>Total Rs</th>
+                                    <th>Paid Rs</th>
+                                    <th>Remaining</th>
+                                    <th>Driver</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${group.records.map(historyRecordRow).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `
+        )
+        .join("");
+}
+
+function historyRecordRow(record) {
+    return `
+        <tr>
+            <td><input value="${escapeHtml(record.farmerName)}" id="history-name-${record._id}"></td>
+            <td><input value="${escapeHtml(record.mobile)}" id="history-mobile-${record._id}"></td>
+            <td><input value="${escapeHtml(record.village)}" id="history-village-${record._id}"></td>
+            <td><input value="${escapeHtml(record.equipment)}" id="history-equipment-${record._id}"></td>
+            <td>${formatDate(record.workDate)}<br><small>${formatTime(record.startTime)} - ${formatTime(record.endTime)}</small></td>
+            <td><input type="number" value="${record.totalHours}" id="history-hours-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.equipmentRate}" id="history-rate-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.totalAmount}" id="history-total-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.paidAmount}" id="history-paid-${record._id}" min="0" step="0.01"></td>
+            <td>${money(record.remainingBalance)}</td>
+            <td>${escapeHtml(record.driverName)}</td>
+            <td class="row-actions">
+                <button type="button" onclick="saveHistoryRecord('${record._id}')">Save</button>
+                <button type="button" class="danger" onclick="deleteRecord('${record._id}')">Delete</button>
+            </td>
+        </tr>
+    `;
+}
+
+async function saveHistoryRecord(id) {
+    await apiFetch(`/work-records/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+            farmerName: document.getElementById(`history-name-${id}`).value.trim(),
+            mobile: document.getElementById(`history-mobile-${id}`).value.trim(),
+            village: document.getElementById(`history-village-${id}`).value.trim(),
+            equipment: document.getElementById(`history-equipment-${id}`).value.trim(),
+            totalHours: Number(document.getElementById(`history-hours-${id}`).value),
+            equipmentRate: Number(document.getElementById(`history-rate-${id}`).value),
+            totalAmount: Number(document.getElementById(`history-total-${id}`).value),
+            paidAmount: Number(document.getElementById(`history-paid-${id}`).value)
+        })
+    });
+    alert("Work record saved.");
+    await loadAll();
+    closeHistoryPanel();
 }
 
 async function loadRecords() {
