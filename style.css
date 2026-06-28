@@ -19,7 +19,7 @@ body {
     font-family: Arial, sans-serif;
     color: var(--ink);
     background:
-        linear-gradient(rgba(243, 248, 239, 0.82), rgba(232, 241, 226, 0.88)),
+        linear-gradient(rgba(243, 248, 239,0.3 ), rgba(232, 241, 226, 0.3)),
         url("tractor-makes-harvesting-hay-animals-farm_627378-1301.avif") center / cover fixed;
 }
 

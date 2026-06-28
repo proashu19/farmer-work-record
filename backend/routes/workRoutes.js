@@ -82,8 +82,7 @@ router.post("/", requireRole(["admin", "driver"]), async (req, res) => {
             paidAmount: roundMoney(paidAmount),
             remainingBalance,
             driverName: req.body.driverName || req.user.name,
-            adminSaved: req.user.role === "admin",
-            adminSavedAt: req.user.role === "admin" ? new Date() : undefined
+            adminSaved: false
         });
 
         farmer.balance = roundMoney(farmer.balance + remainingBalance);
