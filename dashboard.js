@@ -3,6 +3,7 @@ const session = JSON.parse(localStorage.getItem("farmerAppSession") || "null");
 let equipmentCache = [];
 let farmerCache = [];
 let recordCache = [];
+let workRecordGroups = [];
 const expandedRecordGroups = new Set();
 
 const money = (value) => `Rs ${Number(value || 0).toFixed(2)}`;
@@ -289,12 +290,30 @@ async function saveHistoryRecord(id) {
 }
 
 async function loadRecords() {
-    recordCache = await apiFetch("/work-records");
+    const search = document.getElementById("workRecordSearch")?.value.trim().toLowerCase() || "";
+    recordCache = (await apiFetch("/work-records")).filter((record) => record.adminSaved === true);
     const table = document.getElementById("recordsTable");
-    table.innerHTML = groupWorkRecords(recordCache)
+
+    workRecordGroups = groupWorkRecords(recordCache).filter((group) => {
+        if (!search) return true;
+        return [group.farmerName, group.mobile, group.village].some((value) => String(value || "").toLowerCase().includes(search));
+    });
+
+    const visibleGroups = search ? workRecordGroups : workRecordGroups.slice(0, 5);
+
+    if (visibleGroups.length === 0) {
+        table.innerHTML = `
+            <tr>
+                <td colspan="12" class="empty-state">No saved work records found.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    table.innerHTML = visibleGroups
         .map((group) => {
-            const expanded = expandedRecordGroups.has(group.key);
-            const groupRow = `
+            const groupIndex = workRecordGroups.findIndex((item) => item.key === group.key);
+            return `
                 <tr class="merged-record-row">
                     <td><strong>${escapeHtml(group.farmerName)}</strong><br><small>${group.records.length} work records</small></td>
                     <td>${escapeHtml(group.mobile)}</td>
@@ -308,14 +327,60 @@ async function loadRecords() {
                     <td>${money(group.remainingBalance)}</td>
                     <td>${escapeHtml(group.drivers.join(", "))}</td>
                     <td class="row-actions">
-                        <button type="button" onclick="toggleGroupRecords('${group.key}')">${expanded ? "Hide" : "Details"}</button>
+                        <button type="button" onclick="openWorkRecordDetails(${groupIndex})">Details</button>
                     </td>
                 </tr>
             `;
-
-            return expanded ? `${groupRow}${group.records.map(recordDetailRow).join("")}` : groupRow;
         })
         .join("");
+}
+
+function openWorkRecordDetails(groupIndex) {
+    const group = workRecordGroups[groupIndex];
+    if (!group) return;
+
+    const panel = document.getElementById("workRecordDetailPanel");
+    panel.classList.remove("hidden");
+    panel.innerHTML = `
+        <div class="topbar">
+            <div>
+                <p class="eyebrow">Saved Work Details</p>
+                <h2>${escapeHtml(group.farmerName)} - ${escapeHtml(group.mobile)}</h2>
+                <p class="hint">${escapeHtml(group.village)} | ${group.records.length} saved work records in date order</p>
+            </div>
+            <button type="button" class="secondary" onclick="closeWorkRecordDetails()">Close</button>
+        </div>
+        <div class="table-wrap">
+            <table class="individual-history-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Equipment</th>
+                        <th>Date</th>
+                        <th>Work Session Hours</th>
+                        <th>Rate</th>
+                        <th>Total Rs</th>
+                        <th>Paid Rs</th>
+                        <th>Remaining</th>
+                        <th>Driver</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${group.records.map(workRecordEditableRow).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeWorkRecordDetails() {
+    const panel = document.getElementById("workRecordDetailPanel");
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
 }
 
 function groupWorkRecords(records) {
@@ -381,6 +446,47 @@ function recordDetailRow(record) {
             </td>
         </tr>
     `;
+}
+
+function workRecordEditableRow(record) {
+    return `
+        <tr>
+            <td><input value="${escapeHtml(record.farmerName)}" id="work-name-${record._id}"></td>
+            <td><input value="${escapeHtml(record.mobile)}" id="work-mobile-${record._id}"></td>
+            <td><input value="${escapeHtml(record.village)}" id="work-village-${record._id}"></td>
+            <td><input value="${escapeHtml(record.equipment)}" id="work-equipment-${record._id}"></td>
+            <td>${formatDate(record.workDate)}<br><small>${formatTime(record.startTime)} - ${formatTime(record.endTime)}</small></td>
+            <td><input type="number" value="${record.totalHours}" id="work-hours-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.equipmentRate}" id="work-rate-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.totalAmount}" id="work-total-${record._id}" min="0" step="0.01"></td>
+            <td><input type="number" value="${record.paidAmount}" id="work-paid-${record._id}" min="0" step="0.01"></td>
+            <td>${money(record.remainingBalance)}</td>
+            <td>${escapeHtml(record.driverName)}</td>
+            <td class="row-actions">
+                <button type="button" onclick="saveWorkRecordDetail('${record._id}')">Save</button>
+                <button type="button" class="danger" onclick="deleteRecord('${record._id}')">Delete</button>
+            </td>
+        </tr>
+    `;
+}
+
+async function saveWorkRecordDetail(id) {
+    await apiFetch(`/work-records/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+            farmerName: document.getElementById(`work-name-${id}`).value.trim(),
+            mobile: document.getElementById(`work-mobile-${id}`).value.trim(),
+            village: document.getElementById(`work-village-${id}`).value.trim(),
+            equipment: document.getElementById(`work-equipment-${id}`).value.trim(),
+            totalHours: Number(document.getElementById(`work-hours-${id}`).value),
+            equipmentRate: Number(document.getElementById(`work-rate-${id}`).value),
+            totalAmount: Number(document.getElementById(`work-total-${id}`).value),
+            paidAmount: Number(document.getElementById(`work-paid-${id}`).value)
+        })
+    });
+    alert("Work record updated.");
+    await loadAll();
+    closeWorkRecordDetails();
 }
 
 function toggleGroupRecords(key) {
@@ -481,5 +587,9 @@ document.getElementById("driverForm").addEventListener("submit", addDriver);
 document.getElementById("adminFarmerSearch").addEventListener("input", () => {
     clearTimeout(window.adminSearchTimer);
     window.adminSearchTimer = setTimeout(loadFarmers, 250);
+});
+document.getElementById("workRecordSearch").addEventListener("input", () => {
+    clearTimeout(window.workRecordSearchTimer);
+    window.workRecordSearchTimer = setTimeout(loadRecords, 250);
 });
 loadAll().catch((err) => alert(err.message));
