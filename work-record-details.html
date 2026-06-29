@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmer Work Details</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="a4-body">
+  <main class="a4-shell">
+    <div class="actions no-print detail-actions">
+      <button type="button" class="secondary" onclick="goDashboard()">Back to Dashboard</button>
+      <button type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <section class="a4-page">
+      <header class="a4-header">
+        <div>
+          <p class="eyebrow">Farmer Work Record</p>
+          <h1 id="detailFarmerName">Farmer</h1>
+          <p id="detailFarmerMeta" class="hint"></p>
+        </div>
+        <div class="a4-summary">
+          <span>Total Amount</span>
+          <strong id="detailTotal">Rs 0.00</strong>
+          <span>Paid</span>
+          <strong id="detailPaid">Rs 0.00</strong>
+          <span>Remaining</span>
+          <strong id="detailRemaining">Rs 0.00</strong>
+        </div>
+      </header>
+
+      <div class="table-wrap">
+        <table class="a4-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Equipment</th>
+              <th>Hours</th>
+              <th>Rate</th>
+              <th>Total</th>
+              <th>Paid</th>
+              <th>Remaining</th>
+              <th class="no-print">Action</th>
+            </tr>
+          </thead>
+          <tbody id="detailRecordsTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="work-record-details.js"></script>
+</body>
+</html>

@@ -304,7 +304,7 @@ async function loadRecords() {
     if (visibleGroups.length === 0) {
         table.innerHTML = `
             <tr>
-                <td colspan="12" class="empty-state">No saved work records found.</td>
+                <td colspan="3" class="empty-state">No saved work records found.</td>
             </tr>
         `;
         return;
@@ -317,15 +317,6 @@ async function loadRecords() {
                 <tr class="merged-record-row">
                     <td><strong>${escapeHtml(group.farmerName)}</strong><br><small>${group.records.length} work records</small></td>
                     <td>${escapeHtml(group.mobile)}</td>
-                    <td>${escapeHtml(group.village)}</td>
-                    <td>${escapeHtml(group.equipment.join(", "))}</td>
-                    <td>${formatDate(group.latestDate)}<br><small>Latest work</small></td>
-                    <td>${group.totalHours.toFixed(2)}</td>
-                    <td>Mixed</td>
-                    <td>${money(group.totalAmount)}</td>
-                    <td>${money(group.paidAmount)}</td>
-                    <td>${money(group.remainingBalance)}</td>
-                    <td>${escapeHtml(group.drivers.join(", "))}</td>
                     <td class="row-actions">
                         <button type="button" onclick="openWorkRecordDetails(${groupIndex})">Details</button>
                     </td>
@@ -339,48 +330,11 @@ function openWorkRecordDetails(groupIndex) {
     const group = workRecordGroups[groupIndex];
     if (!group) return;
 
-    const panel = document.getElementById("workRecordDetailPanel");
-    panel.classList.remove("hidden");
-    panel.innerHTML = `
-        <div class="topbar">
-            <div>
-                <p class="eyebrow">Saved Work Details</p>
-                <h2>${escapeHtml(group.farmerName)} - ${escapeHtml(group.mobile)}</h2>
-                <p class="hint">${escapeHtml(group.village)} | ${group.records.length} saved work records in date order</p>
-            </div>
-            <button type="button" class="secondary" onclick="closeWorkRecordDetails()">Close</button>
-        </div>
-        <div class="table-wrap">
-            <table class="individual-history-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Address</th>
-                        <th>Equipment</th>
-                        <th>Date</th>
-                        <th>Work Session Hours</th>
-                        <th>Rate</th>
-                        <th>Total Rs</th>
-                        <th>Paid Rs</th>
-                        <th>Remaining</th>
-                        <th>Driver</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${group.records.map(workRecordEditableRow).join("")}
-                </tbody>
-            </table>
-        </div>
-    `;
-    panel.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function closeWorkRecordDetails() {
-    const panel = document.getElementById("workRecordDetailPanel");
-    panel.classList.add("hidden");
-    panel.innerHTML = "";
+    const params = new URLSearchParams({
+        name: group.farmerName,
+        mobile: group.mobile
+    });
+    window.location.href = `work-record-details.html?${params.toString()}`;
 }
 
 function groupWorkRecords(records) {

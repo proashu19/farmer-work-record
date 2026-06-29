@@ -410,9 +410,114 @@ td input {
     min-width: 1240px;
 }
 
+.a4-body {
+    background: #e8ece6;
+}
+
+.a4-shell {
+    width: min(100%, 1120px);
+    margin: 0 auto;
+    padding: 18px;
+}
+
+.detail-actions {
+    justify-content: flex-end;
+    margin: 0 auto 14px;
+}
+
+.detail-actions button {
+    width: auto;
+    min-width: 140px;
+}
+
+.a4-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 16mm;
+    background: #fff;
+    border: 1px solid #d9dfd8;
+    box-shadow: 0 18px 50px rgba(22, 34, 25, 0.18);
+}
+
+.a4-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--green);
+}
+
+.a4-summary {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 4px 12px;
+    min-width: 220px;
+    align-content: start;
+}
+
+.a4-summary span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.a4-table {
+    min-width: 100%;
+    font-size: 12px;
+}
+
+.a4-table th,
+.a4-table td {
+    padding: 7px;
+}
+
+.a4-table input {
+    min-width: 82px;
+    min-height: 32px;
+    padding: 5px 6px;
+    font-size: 12px;
+}
+
+.a4-table button {
+    min-height: 32px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
 td .row-actions,
 .row-actions {
     min-width: 180px;
+}
+
+@media print {
+    body {
+        background: #fff;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .a4-shell {
+        width: 100%;
+        padding: 0;
+    }
+
+    .a4-page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        padding: 12mm;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .a4-table input {
+        border: 0;
+        padding: 0;
+    }
 }
 
 @media (max-width: 760px) {
@@ -446,5 +551,19 @@ td .row-actions,
 
     h1 {
         font-size: 26px;
+    }
+
+    .a4-shell {
+        padding: 8px;
+    }
+
+    .a4-page {
+        width: 100%;
+        min-height: auto;
+        padding: 12px;
+    }
+
+    .a4-header {
+        flex-direction: column;
     }
 }

@@ -19,6 +19,27 @@ router.get("/", requireRole("admin"), async (req, res) => {
     }
 });
 
+router.get("/farmer-history", requireRole("admin"), async (req, res) => {
+    try {
+        const farmerName = (req.query.name || "").trim();
+        const mobile = (req.query.mobile || "").trim();
+
+        if (!farmerName || !mobile) {
+            return res.status(400).json({ error: "Farmer name and phone number are required." });
+        }
+
+        const records = await WorkRecord.find({
+            adminSaved: true,
+            farmerName,
+            mobile
+        }).sort({ startTime: 1 });
+
+        res.json(records);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get("/summary", requireRole("admin"), async (req, res) => {
     try {
         const today = new Date();
